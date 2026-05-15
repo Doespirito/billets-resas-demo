@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Billets & Résas — Démo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F2F2F7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+
+/* MODE SÉLECTION */
+#mode-select { width: 100%; max-width: 420px; padding: 48px 24px 24px; }
+.mode-title { font-size: 22px; font-weight: 600; color: #1C1C1E; margin-bottom: 6px; }
+.mode-sub { font-size: 14px; color: #6C6C70; margin-bottom: 32px; }
+.mode-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 14px; cursor: pointer; display: flex; align-items: center; gap: 16px; border: 1px solid #E5E5EA; transition: transform 0.1s; }
+.mode-card:active { transform: scale(0.98); }
+.mode-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.mode-icon.user { background: #EFF6FF; color: #1D4ED8; }
+.mode-icon.admin { background: #F5F3FF; color: #7C3AED; }
+.mode-card-title { font-size: 16px; font-weight: 600; color: #1C1C1E; }
+.mode-card-sub { font-size: 13px; color: #6C6C70; margin-top: 2px; }
+.demo-badge { font-size: 11px; background: #FFF7ED; color: #EA580C; border: 1px solid #FED7AA; border-radius: 20px; padding: 3px 10px; display: inline-block; margin-bottom: 20px; }
+
+/* APP SHELL */
+#app { display: none; width: 100%; max-width: 420px; min-height: 100vh; background: #fff; flex-direction: column; }
+#app.visible { display: flex; }
+.app-header { background: #fff; border-bottom: 0.5px solid #E5E5EA; padding: 52px 16px 12px; position: sticky; top: 0; z-index: 10; }
+.header-row { display: flex; align-items: center; justify-content: space-between; }
+.header-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0; }
+.ha-user { background: #1D4ED8; }
+.ha-admin { background: #7C3AED; }
+.header-title { font-size: 17px; font-weight: 600; color: #1C1C1E; }
+.header-sub { font-size: 11px; margin-top: 1px; }
+.admin-pill { font-size: 11px; background: #F5F3FF; color: #7C3AED; border: 0.5px solid #DDD6FE; border-radius: 20px; padding: 3px 10px; font-weight: 500; }
+
+.screen-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px; }
+.view { padding: 16px; }
+.view.hidden { display: none; }
+
+/* STATS */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.stat { background: #F2F2F7; border-radius: 12px; padding: 12px 14px; }
+.stat-val { font-size: 24px; font-weight: 600; color: #1C1C1E; }
+.stat-val.green { color: #059669; }
+.stat-val.red { color: #DC2626; }
+.stat-val.purple { color: #7C3AED; }
+.stat-label { font-size: 11px; color: #6C6C70; margin-top: 3px; }
+
+/* SECTION LABEL */
+.section-label { font-size: 11px; font-weight: 600; color: #6C6C70; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+
+/* ACTION GRID */
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.action-btn { background: #F2F2F7; border-radius: 14px; padding: 14px 12px; cursor: pointer; text-align: left; border: none; font-family: inherit; transition: opacity 0.1s; }
+.action-btn:active { opacity: 0.7; }
+.action-btn i { font-size: 22px; margin-bottom: 8px; display: block; }
+.action-btn .abl { font-size: 13px; font-weight: 600; color: #1C1C1E; display: block; }
+.action-btn .abs { font-size: 11px; color: #6C6C70; display: block; margin-top: 2px; }
+.ab-purple { background: #F5F3FF; } .ab-purple i { color: #7C3AED; }
+.ab-green { background: #F0FDF4; } .ab-green i { color: #059669; }
+.ab-blue { background: #EFF6FF; } .ab-blue i { color: #1D4ED8; }
+.ab-orange { background: #FFF7ED; } .ab-orange i { color: #EA580C; }
+.ab-urgent { background: #FEF2F2; grid-column: 1/-1; display: flex; align-items: center; gap: 12px; }
+.ab-urgent i { margin: 0; color: #DC2626; }
+
+/* ALERT CARDS */
+.alert-card { background: #FEF2F2; border: 0.5px solid #FECACA; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+.alert-title { font-size: 13px; font-weight: 600; color: #DC2626; margin-bottom: 3px; }
+.alert-desc { font-size: 12px; color: #B91C1C; line-height: 1.4; }
+.alert-actions { display: flex; gap: 8px; margin-top: 10px; }
+.match-card { background: #F0FDF4; border: 0.5px solid #6EE7B7; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+.match-title { font-size: 13px; font-weight: 600; color: #059669; margin-bottom: 3px; }
+.match-desc { font-size: 12px; color: #047857; line-height: 1.4; }
+
+/* BUTTONS */
+.btn { border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+.btn-approve { background: #D1FAE5; color: #065F46; font-size: 12px; padding: 7px 14px; }
+.btn-reject { background: #FEE2E2; color: #991B1B; font-size: 12px; padding: 7px 14px; }
+.btn-docs { background: #F2F2F7; color: #6C6C70; font-size: 12px; padding: 7px 14px; border: 0.5px solid #E5E5EA; }
+.btn-primary { background: #1D4ED8; color: #fff; font-size: 14px; font-weight: 600; padding: 14px; width: 100%; border-radius: 14px; margin-top: 4px; }
+.btn-purple { background: #7C3AED; color: #fff; font-size: 14px; font-weight: 600; padding: 14px; width: 100%; border-radius: 14px; margin-top: 4px; }
+.btn-admin-msg { background: #7C3AED; color: #fff; font-size: 13px; font-weight: 600; padding: 12px; width: 100%; border-radius: 12px; margin-top: 8px; }
+
+/* BACK BTN */
+.back-btn { display: flex; align-items: center; gap: 6px; font-size: 15px; color: #1D4ED8; background: none; border: none; cursor: pointer; font-family: inherit; margin-bottom: 16px; padding: 0; font-weight: 500; }
+.back-btn.purple { color: #7C3AED; }
+
+/* ANNONCE CARDS */
+.annonce-card { background: #fff; border: 0.5px solid #E5E5EA; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.annonce-card.matched { background: #F0FDF4; border-color: #6EE7B7; }
+.annonce-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.annonce-title { font-size: 14px; font-weight: 600; color: #1C1C1E; }
+.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
+.badge-achat { background: #EFF6FF; color: #1D4ED8; }
+.badge-vente { background: #F5F3FF; color: #7C3AED; }
+.badge-match { background: #D1FAE5; color: #065F46; }
+.badge-urgence { background: #FEF2F2; color: #DC2626; }
+.annonce-meta { font-size: 12px; color: #6C6C70; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.match-tag { font-size: 12px; color: #059669; font-weight: 500; margin-top: 4px; }
+.contact-btn { width: 100%; padding: 10px; border-radius: 10px; background: #059669; color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
+
+/* BIG BUTTONS (user home) */
+.big-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.big-btn { background: #F2F2F7; border-radius: 18px; padding: 18px 14px; cursor: pointer; text-align: left; border: none; font-family: inherit; transition: opacity 0.1s; }
+.big-btn:active { opacity: 0.7; }
+.big-btn.achat { background: #EFF6FF; }
+.big-btn.vente { background: #F5F3FF; }
+.big-btn.urgent { background: #FEF2F2; grid-column: 1/-1; display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.big-btn i { font-size: 26px; margin-bottom: 10px; display: block; }
+.big-btn.urgent i { margin: 0; }
+.big-btn .bbl { font-size: 14px; font-weight: 600; color: #1C1C1E; display: block; }
+.big-btn .bbs { font-size: 12px; color: #6C6C70; display: block; margin-top: 3px; }
+.big-btn.achat i { color: #1D4ED8; }
+.big-btn.vente i { color: #7C3AED; }
+.big-btn.urgent i, .big-btn.urgent .bbl { color: #DC2626; }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: #6C6C70; margin-bottom: 6px; display: block; }
+.form-group select, .form-group input, .form-group textarea {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #E5E5EA;
+  font-size: 14px; font-family: inherit; background: #F2F2F7; color: #1C1C1E; -webkit-appearance: none;
+}
+.form-group textarea { resize: none; }
+.type-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.type-chip { padding: 10px; border-radius: 12px; border: 1.5px solid #E5E5EA; cursor: pointer; text-align: center; font-size: 13px; font-weight: 600; background: #F2F2F7; color: #6C6C70; font-family: inherit; transition: all 0.15s; }
+.type-chip.active-achat { background: #EFF6FF; color: #1D4ED8; border-color: #93C5FD; }
+.type-chip.active-vente { background: #F5F3FF; color: #7C3AED; border-color: #C4B5FD; }
+
+/* USER LIST */
+.user-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid #F2F2F7; }
+.user-row:last-child { border: none; }
+.uavatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.ua-p { background: #EDE9FE; color: #6D28D9; }
+.ua-b { background: #DBEAFE; color: #1D4ED8; }
+.ua-g { background: #D1FAE5; color: #065F46; }
+.ua-o { background: #FEF3C7; color: #92400E; }
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 14px; font-weight: 600; color: #1C1C1E; }
+.user-meta { font-size: 11px; color: #6C6C70; margin-top: 1px; }
+.user-status { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; }
+.us-active { background: #D1FAE5; color: #065F46; }
+.us-pending { background: #FEF3C7; color: #92400E; }
+.us-admin { background: #EDE9FE; color: #6D28D9; }
+
+/* PENDING CARDS */
+.pending-card { background: #F2F2F7; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+
+/* ANNONCE ROW (admin) */
+.ar-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 0.5px solid #F2F2F7; }
+.ar-row:last-child { border: none; }
+.ar-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
+.ar-a { background: #EFF6FF; color: #1D4ED8; }
+.ar-v { background: #F5F3FF; color: #7C3AED; }
+.ar-body { flex: 1; min-width: 0; }
+.ar-title { font-size: 13px; font-weight: 600; color: #1C1C1E; }
+.ar-meta { font-size: 11px; color: #6C6C70; margin-top: 2px; }
+.ar-del { font-size: 20px; color: #C7C7CC; cursor: pointer; flex-shrink: 0; padding: 2px; }
+
+/* TOGGLES */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid #F2F2F7; }
+.toggle-row:last-of-type { border: none; }
+.toggle-label { font-size: 14px; font-weight: 500; color: #1C1C1E; }
+.toggle-sub { font-size: 12px; color: #6C6C70; margin-top: 2px; }
+.toggle { width: 51px; height: 31px; border-radius: 16px; background: #34C759; position: relative; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+.toggle::after { content: ''; position: absolute; width: 27px; height: 27px; background: #fff; border-radius: 50%; top: 2px; right: 2px; transition: right 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.toggle.off { background: #E5E5EA; }
+.toggle.off::after { right: 22px; }
+
+/* CONFIRM VIEW */
+.confirm-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; text-align: center; padding: 24px; }
+.confirm-icon { width: 64px; height: 64px; background: #D1FAE5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #059669; margin: 0 auto 18px; }
+.confirm-title { font-size: 18px; font-weight: 700; color: #1C1C1E; margin-bottom: 10px; }
+.confirm-desc { font-size: 14px; color: #6C6C70; line-height: 1.6; max-width: 260px; }
+
+/* MATCH DETAIL */
+.match-pair { background: #F2F2F7; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.mp-name { font-size: 13px; font-weight: 600; color: #1C1C1E; }
+.mp-detail { font-size: 12px; color: #6C6C70; margin-top: 2px; }
+.mp-arrow { text-align: center; font-size: 20px; color: #059669; padding: 6px 0; }
+
+/* BOTTOM NAV */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; background: rgba(255,255,255,0.95); border-top: 0.5px solid #E5E5EA; display: flex; padding: 8px 0 24px; backdrop-filter: blur(20px); z-index: 20; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; border: none; background: none; font-family: inherit; padding: 4px 0; position: relative; }
+.nav-icon { font-size: 22px; color: #8E8E93; }
+.nav-icon.on { color: #1D4ED8; }
+.nav-icon.on.purple { color: #7C3AED; }
+.nav-label { font-size: 10px; color: #8E8E93; }
+.nav-label.on { color: #1D4ED8; font-weight: 600; }
+.nav-label.on.purple { color: #7C3AED; }
+.nav-dot { position: absolute; top: 2px; right: 28%; width: 8px; height: 8px; background: #DC2626; border-radius: 50%; border: 2px solid #fff; }
+
+/* SWITCH MODE */
+.switch-mode { text-align: center; margin-top: 20px; }
+.switch-link { font-size: 13px; color: #1D4ED8; background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- MODE SELECT -->
+<div id="mode-select">
+  <p class="demo-badge">Prototype interactif · Billets & Résas</p>
+  <div class="mode-title">Choisissez votre vue</div>
+  <div class="mode-sub">Deux interfaces selon votre rôle dans la plateforme</div>
+  <div class="mode-card" onclick="startApp('user')">
+    <div class="mode-icon user"><i class="ti ti-ticket"></i></div>
+    <div>
+      <div class="mode-card-title">Vue Guide</div>
+      <div class="mode-card-sub">Déposer une annonce, consulter les offres, recevoir un match</div>
+    </div>
+  </div>
+  <div class="mode-card" onclick="startApp('admin')">
+    <div class="mode-icon admin"><i class="ti ti-shield-check"></i></div>
+    <div>
+      <div class="mode-card-title">Vue Admin — Noha</div>
+      <div class="mode-card-sub">Gérer les membres, modérer les annonces, régler la plateforme</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="header-row">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="header-avatar" class="header-avatar ha-user">G</div>
+        <div>
+          <div class="header-title">Billets & Résas</div>
+          <div id="header-sub" class="header-sub" style="color:#1D4ED8;">Guides professionnels</div>
+        </div>
+      </div>
+      <div id="admin-pill" class="admin-pill" style="display:none;"><i class="ti ti-shield-check"></i> Admin</div>
+    </div>
+  </div>
+
+  <div class="screen-content">
+
+    <!-- USER: HOME -->
+    <div id="v-home" class="view hidden">
+      <div class="big-grid">
+        <div class="big-btn achat" onclick="goTo('v-form-achat')">
+          <i class="ti ti-shopping-cart"></i>
+          <span class="bbl">Je cherche</span>
+          <span class="bbs">un billet ou une resa</span>
+        </div>
+        <div class="big-btn vente" onclick="goTo('v-form-vente')">
+          <i class="ti ti-tag"></i>
+          <span class="bbl">Je vends</span>
+          <span class="bbs">un billet disponible</span>
+        </div>
+        <div class="big-btn urgent" onclick="goTo('v-form-achat')">
+          <i class="ti ti-alert-triangle"></i>
+          <div>
+            <span class="bbl">Urgence</span>
+            <span class="bbs" style="color:#B91C1C;">besoin immédiat</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-label">Annonces du moment</div>
+      <div class="annonce-card matched" onclick="goTo('v-match-detail')">
+        <div class="annonce-top">
+          <div class="annonce-title">Louvre · DDP Grand groupe</div>
+          <span class="badge badge-match">● Match !</span>
+        </div>
+        <div class="annonce-meta"><span>28 mai · avant 10h</span><span>1 billet</span></div>
+        <div class="match-tag">✓ Correspondance trouvée avec Tien</div>
+      </div>
+      <div class="annonce-card">
+        <div class="annonce-top">
+          <div class="annonce-title">Versailles · Passeport</div>
+          <span class="badge badge-vente">Vente</span>
+        </div>
+        <div class="annonce-meta"><span>24 mai · 14h</span><span>4 billets · 25€/u</span></div>
+      </div>
+      <div class="annonce-card">
+        <div class="annonce-top">
+          <div class="annonce-title">Sainte-Chapelle · DDP</div>
+          <span class="badge badge-achat">Recherche</span>
+        </div>
+        <div class="annonce-meta"><span>4 juin · 10h30</span><span>1 billet</span></div>
+      </div>
+      <div class="annonce-card">
+        <div class="annonce-top">
+          <div class="annonce-title">Giverny · Entrée</div>
+          <span class="badge badge-vente">Vente</span>
+        </div>
+        <div class="annonce-meta"><span>15 mai · 11h30</span><span>4 billets · 45€/u</span></div>
+      </div>
+    </div>
+
+    <!-- USER: FORM ACHAT -->
+    <div id="v-form-achat" class="view hidden">
+      <button class="back-btn" onclick="goTo('v-home')"><i class="ti ti-chevron-left"></i> Retour</button>
+      <div class="type-row">
+        <button class="type-chip active-achat">Je cherche</button>
+        <button class="type-chip" onclick="goTo('v-form-vente')">Je vends</button>
+      </div>
+      <div class="form-group"><label class="form-label">Lieu</label>
+        <select><option>Louvre</option><option>Versailles</option><option>Sainte-Chapelle</option><option>Musée d'Orsay</option><option>Giverny</option><option>Quai Branly</option></select></div>
+      <div class="form-group"><label class="form-label">Type de billet</label>
+        <select><option>DDP Petit groupe</option><option>DDP Grand groupe</option><option>Droit de parole GG</option><option>Passeport</option></select></div>
+      <div class="form-group"><label class="form-label">Date souhaitée</label><input type="date"></div>
+      <div class="form-group"><label class="form-label">Contrainte horaire</label><input type="text" placeholder="ex : avant 10h, après 15h…"></div>
+      <div class="form-group"><label class="form-label">Quantité</label><input type="number" value="1" min="1" max="10"></div>
+      <button class="btn btn-primary" onclick="goTo('v-confirm')"><i class="ti ti-send"></i> Publier ma recherche</button>
+    </div>
+
+    <!-- USER: FORM VENTE -->
+    <div id="v-form-vente" class="view hidden">
+      <button class="back-btn" onclick="goTo('v-home')"><i class="ti ti-chevron-left"></i> Retour</button>
+      <div class="type-row">
+        <button class="type-chip" onclick="goTo('v-form-achat')">Je cherche</button>
+        <button class="type-chip active-vente">Je vends</button>
+      </div>
+      <div class="form-group"><label class="form-label">Lieu</label>
+        <select><option>Louvre</option><option>Versailles</option><option>Sainte-Chapelle</option><option>Giverny</option><option>Quai Branly</option></select></div>
+      <div class="form-group"><label class="form-label">Type de billet</label>
+        <select><option>DDP Petit groupe</option><option>DDP Grand groupe</option><option>Passeport</option><option>Entrée individuelle</option></select></div>
+      <div class="form-group"><label class="form-label">Date et heure du billet</label><input type="date"></div>
+      <div class="form-group"><label class="form-label">Prix demandé (€/billet)</label><input type="number" placeholder="ex : 45"></div>
+      <div class="form-group"><label class="form-label">Quantité</label><input type="number" value="1" min="1" max="10"></div>
+      <button class="btn btn-purple" onclick="goTo('v-confirm')"><i class="ti ti-send"></i> Mettre en vente</button>
+    </div>
+
+    <!-- USER: MATCH DETAIL -->
+    <div id="v-match-detail" class="view hidden">
+      <button class="back-btn" onclick="goTo('v-home')"><i class="ti ti-chevron-left"></i> Retour</button>
+      <div class="match-card" style="margin-bottom:16px;">
+        <div class="match-title"><i class="ti ti-check"></i> Match trouvé pour votre annonce</div>
+        <div class="match-desc">Louvre · DDP Grand groupe · 28 mai avant 10h</div>
+      </div>
+      <div class="match-pair">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div class="uavatar ua-b">IP</div>
+          <div><div class="mp-name">Iuliana Pintea</div><div class="mp-detail">Cherche · 1 billet · 28/05 avant 10h</div></div>
+        </div>
+      </div>
+      <div class="mp-arrow">⇄</div>
+      <div class="match-pair">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div class="uavatar ua-g">T</div>
+          <div><div class="mp-name">Tien</div><div class="mp-detail">Offre · 1 billet · 28/05 avant 10h</div></div>
+        </div>
+      </div>
+      <button class="contact-btn"><i class="ti ti-message"></i> Contacter Tien en message privé</button>
+      <p style="font-size:12px;color:#8E8E93;text-align:center;margin-top:12px;">La transaction se finalise entre vous — la plateforme ne s'interpose pas.</p>
+    </div>
+
+    <!-- USER: CONFIRM -->
+    <div id="v-confirm" class="view hidden">
+      <div class="confirm-center">
+        <div class="confirm-icon"><i class="ti ti-check"></i></div>
+        <div class="confirm-title">Annonce publiée !</div>
+        <div class="confirm-desc">Le système recherche un match en temps réel. Vous serez notifié dès qu'une correspondance est trouvée.</div>
+        <button class="back-btn" style="margin-top:24px;" onclick="goTo('v-home')"><i class="ti ti-arrow-left"></i> Retour aux annonces</button>
+      </div>
+    </div>
+
+    <!-- ADMIN: DASHBOARD -->
+    <div id="v-dash" class="view hidden">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-val purple">477</div><div class="stat-label">Membres</div></div>
+        <div class="stat"><div class="stat-val">23</div><div class="stat-label">Annonces actives</div></div>
+        <div class="stat"><div class="stat-val green">4</div><div class="stat-label">Matches aujourd'hui</div></div>
+        <div class="stat"><div class="stat-val red">2</div><div class="stat-label">En attente</div></div>
+      </div>
+      <div class="section-label">Actions rapides</div>
+      <div class="action-grid">
+        <div class="action-btn ab-purple" onclick="goTo('v-add-member')"><i class="ti ti-user-plus"></i><span class="abl">Ajouter un membre</span><span class="abs">invitation directe</span></div>
+        <div class="action-btn ab-green" onclick="goTo('v-mod-annonces')"><i class="ti ti-layout-list"></i><span class="abl">Gérer annonces</span><span class="abs">modérer, supprimer</span></div>
+        <div class="action-btn ab-blue" onclick="goTo('v-settings')"><i class="ti ti-bell"></i><span class="abl">Notifier groupe</span><span class="abs">message admin</span></div>
+        <div class="action-btn ab-orange" onclick="goTo('v-settings')"><i class="ti ti-settings"></i><span class="abl">Paramètres</span><span class="abs">règles, accès</span></div>
+      </div>
+      <div class="section-label">Alertes</div>
+      <div class="alert-card">
+        <div class="alert-title"><i class="ti ti-user-check"></i> 2 demandes d'accès</div>
+        <div class="alert-desc">Antje Kahnt · guide DE/FR — Oksana P. · guide RU/FR</div>
+        <div class="alert-actions">
+          <button class="btn btn-approve" onclick="goTo('v-pending')">Examiner</button>
+        </div>
+      </div>
+      <div class="match-card">
+        <div class="match-title"><i class="ti ti-clock"></i> Match non finalisé · 48h</div>
+        <div class="match-desc">Louvre DDP 22/05 — Iuliana / Tien — pas de retour reçu</div>
+      </div>
+    </div>
+
+    <!-- ADMIN: ADD MEMBER -->
+    <div id="v-add-member" class="view hidden">
+      <button class="back-btn purple" onclick="goTo('v-dash')"><i class="ti ti-chevron-left"></i> Tableau de bord</button>
+      <div class="section-label" style="margin-bottom:14px;">Inviter un nouveau membre</div>
+      <div class="form-group"><label class="form-label">Nom complet</label><input type="text" placeholder="ex : Sophie Martin"></div>
+      <div class="form-group"><label class="form-label">Téléphone (WhatsApp)</label><input type="tel" placeholder="+33 6…"></div>
+      <div class="form-group"><label class="form-label">Rôle</label>
+        <select><option>Membre standard</option><option>Modérateur</option><option>Admin</option></select></div>
+      <div class="form-group"><label class="form-label">Note interne (facultatif)</label><input type="text" placeholder="ex : contact FNGIC, recommandée par Cécile…"></div>
+      <button class="btn btn-purple" onclick="goTo('v-add-confirm')"><i class="ti ti-send"></i> Envoyer l'invitation</button>
+      <div class="section-label" style="margin-top:24px;">Membres récents</div>
+      <div class="user-row"><div class="uavatar ua-p">NE</div><div class="user-info"><div class="user-name">Noha Escartin</div><div class="user-meta">FR · EN · AR · depuis 2023</div></div><span class="user-status us-admin">Admin</span></div>
+      <div class="user-row"><div class="uavatar ua-b">NY</div><div class="user-info"><div class="user-name">Ning Yang</div><div class="user-meta">FR · EN · ZH · Versailles/Paris</div></div><span class="user-status us-active">Actif</span></div>
+      <div class="user-row"><div class="uavatar ua-g">IP</div><div class="user-info"><div class="user-name">Iuliana Pintea</div><div class="user-meta">FR · RO · Louvre spé.</div></div><span class="user-status us-active">Actif</span></div>
+      <div class="user-row"><div class="uavatar ua-o">AK</div><div class="user-info"><div class="user-name">Antje Kahnt</div><div class="user-meta">FR · DE · en attente vérif.</div></div><span class="user-status us-pending">En attente</span></div>
+    </div>
+
+    <!-- ADMIN: ADD CONFIRM -->
+    <div id="v-add-confirm" class="view hidden">
+      <div class="confirm-center">
+        <div class="confirm-icon" style="background:#EDE9FE;color:#7C3AED;"><i class="ti ti-mail"></i></div>
+        <div class="confirm-title">Invitation envoyée</div>
+        <div class="confirm-desc">Sophie Martin recevra un SMS avec le lien d'accès. Elle apparaîtra en "En attente" jusqu'à sa première connexion.</div>
+        <button class="back-btn purple" style="margin-top:24px;" onclick="goTo('v-dash')"><i class="ti ti-arrow-left"></i> Retour au tableau de bord</button>
+      </div>
+    </div>
+
+    <!-- ADMIN: PENDING -->
+    <div id="v-pending" class="view hidden">
+      <button class="back-btn purple" onclick="goTo('v-dash')"><i class="ti ti-chevron-left"></i> Tableau de bord</button>
+      <div class="section-label" style="margin-bottom:14px;">Demandes d'accès à valider</div>
+      <div class="pending-card">
+        <div class="user-row" style="padding:0 0 10px;border-bottom:0.5px solid #E5E5EA;margin-bottom:10px;">
+          <div class="uavatar ua-o">AK</div>
+          <div class="user-info"><div class="user-name">Antje Kahnt</div><div class="user-meta">+49 177 249 7391 · guide DE/FR</div></div>
+        </div>
+        <p style="font-size:12px;color:#6C6C70;margin-bottom:12px;line-height:1.5;">Spécialité : Louvre, Versailles · langues DE/FR · carte professionnelle à vérifier</p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-approve" style="flex:1;padding:10px;" onclick="goTo('v-dash')">Accepter</button>
+          <button class="btn btn-reject" style="flex:1;padding:10px;">Refuser</button>
+          <button class="btn btn-docs" style="flex:1;padding:10px;">Docs</button>
+        </div>
+      </div>
+      <div class="pending-card">
+        <div class="user-row" style="padding:0 0 10px;border-bottom:0.5px solid #E5E5EA;margin-bottom:10px;">
+          <div class="uavatar ua-g">OP</div>
+          <div class="user-info"><div class="user-name">Oksana P.</div><div class="user-meta">+33 7 62 45 18 52 · guide RU/FR</div></div>
+        </div>
+        <p style="font-size:12px;color:#6C6C70;margin-bottom:12px;line-height:1.5;">Spécialité : Louvre, Orsay · langues RU/FR · recommandée par Iuliana Pintea</p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-approve" style="flex:1;padding:10px;" onclick="goTo('v-dash')">Accepter</button>
+          <button class="btn btn-reject" style="flex:1;padding:10px;">Refuser</button>
+          <button class="btn btn-docs" style="flex:1;padding:10px;">Docs</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN: MOD ANNONCES -->
+    <div id="v-mod-annonces" class="view hidden">
+      <button class="back-btn purple" onclick="goTo('v-dash')"><i class="ti ti-chevron-left"></i> Tableau de bord</button>
+      <div class="section-label" style="margin-bottom:4px;">Annonces actives · modération</div>
+      <div class="ar-row"><span class="ar-badge ar-a">Achat</span><div class="ar-body"><div class="ar-title">Louvre DDP GG · 28/05 avant 10h</div><div class="ar-meta">Iuliana P. · publiée il y a 2h</div></div><i class="ti ti-trash ar-del"></i></div>
+      <div class="ar-row"><span class="ar-badge ar-v">Vente</span><div class="ar-body"><div class="ar-title">Versailles Passeport · 24/05 14h · ×4</div><div class="ar-meta">Ning Yang · publiée hier soir</div></div><i class="ti ti-trash ar-del"></i></div>
+      <div class="ar-row"><span class="ar-badge ar-a">Achat</span><div class="ar-body"><div class="ar-title">Sainte-Chapelle DDP · 4/06 10h30</div><div class="ar-meta">Emilie · publiée ce matin</div></div><i class="ti ti-trash ar-del"></i></div>
+      <div class="ar-row"><span class="ar-badge ar-a">Achat</span><div class="ar-body"><div class="ar-title">Louvre DDP GG · 7–24/06 multi-dates</div><div class="ar-meta">Jane HC Robert · 10 billets sur période</div></div><i class="ti ti-trash ar-del"></i></div>
+      <div class="ar-row"><span class="ar-badge ar-v">Vente</span><div class="ar-body"><div class="ar-title">Giverny · 15/05 11h30 · ×4 · 45€/u</div><div class="ar-meta">Anonyme · expire ce soir</div></div><i class="ti ti-trash ar-del"></i></div>
+    </div>
+
+    <!-- ADMIN: SETTINGS -->
+    <div id="v-settings" class="view hidden">
+      <button class="back-btn purple" onclick="goTo('v-dash')"><i class="ti ti-chevron-left"></i> Tableau de bord</button>
+      <div class="section-label" style="margin-bottom:4px;">Paramètres de la plateforme</div>
+      <div class="toggle-row"><div><div class="toggle-label">Accès ouvert</div><div class="toggle-sub">nouveaux membres sans validation</div></div><div class="toggle off" onclick="this.classList.toggle('off')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Matching automatique</div><div class="toggle-sub">notifier les parties sur match</div></div><div class="toggle" onclick="this.classList.toggle('off')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Urgences en tête</div><div class="toggle-sub">priorité d'affichage</div></div><div class="toggle" onclick="this.classList.toggle('off')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Expiration auto 48h</div><div class="toggle-sub">archiver les annonces périmées</div></div><div class="toggle" onclick="this.classList.toggle('off')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Mode invitation seule</div><div class="toggle-sub">accès sur recommandation uniquement</div></div><div class="toggle" onclick="this.classList.toggle('off')"></div></div>
+      <div style="margin-top:20px;">
+        <div class="section-label">Message à tous les membres</div>
+        <div class="form-group"><textarea rows="3" placeholder="ex : Rappel — les annonces expirent après 48h. Pensez à les renouveler si toujours d'actualité."></textarea></div>
+        <button class="btn btn-admin-msg"><i class="ti ti-send"></i> Envoyer à tous les membres</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV USER -->
+  <div id="nav-user" class="bottom-nav" style="display:none;">
+    <button class="nav-item" onclick="goTo('v-home')">
+      <span id="nu-1" class="nav-icon on"><i class="ti ti-layout-list"></i></span>
+      <span class="nav-label on">Annonces</span>
+    </button>
+    <button class="nav-item" onclick="goTo('v-form-achat')">
+      <span id="nu-2" class="nav-icon"><i class="ti ti-plus"></i></span>
+      <span class="nav-label">Publier</span>
+    </button>
+    <button class="nav-item" onclick="goTo('v-match-detail')">
+      <span id="nu-3" class="nav-icon"><i class="ti ti-bell"></i></span>
+      <span class="nav-label">Matches</span>
+      <span class="nav-dot"></span>
+    </button>
+  </div>
+
+  <!-- BOTTOM NAV ADMIN -->
+  <div id="nav-admin" class="bottom-nav" style="display:none;">
+    <button class="nav-item" onclick="goTo('v-dash')">
+      <span class="nav-icon on purple"><i class="ti ti-layout-dashboard"></i></span>
+      <span class="nav-label on purple">Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="goTo('v-add-member')">
+      <span class="nav-icon"><i class="ti ti-users"></i></span>
+      <span class="nav-label">Membres</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-item" onclick="goTo('v-mod-annonces')">
+      <span class="nav-icon"><i class="ti ti-list"></i></span>
+      <span class="nav-label">Annonces</span>
+    </button>
+    <button class="nav-item" onclick="goTo('v-settings')">
+      <span class="nav-icon"><i class="ti ti-settings"></i></span>
+      <span class="nav-label">Réglages</span>
+    </button>
+  </div>
+
+  <div class="switch-mode">
+    <button class="switch-link" onclick="resetApp()">← Changer de vue</button>
+  </div>
+</div>
+
+<script>
+let currentMode = '';
+
+function startApp(mode) {
+  currentMode = mode;
+  document.getElementById('mode-select').style.display = 'none';
+  const app = document.getElementById('app');
+  app.classList.add('visible');
+
+  const avatar = document.getElementById('header-avatar');
+  const sub = document.getElementById('header-sub');
+  const pill = document.getElementById('admin-pill');
+
+  if (mode === 'user') {
+    avatar.className = 'header-avatar ha-user';
+    avatar.textContent = 'G';
+    sub.style.color = '#1D4ED8';
+    sub.textContent = 'Guides professionnels';
+    pill.style.display = 'none';
+    document.getElementById('nav-user').style.display = 'flex';
+    document.getElementById('nav-admin').style.display = 'none';
+    goTo('v-home');
+  } else {
+    avatar.className = 'header-avatar ha-admin';
+    avatar.textContent = 'NE';
+    sub.style.color = '#7C3AED';
+    sub.textContent = 'Administration';
+    pill.style.display = 'flex';
+    document.getElementById('nav-user').style.display = 'none';
+    document.getElementById('nav-admin').style.display = 'flex';
+    goTo('v-dash');
+  }
+}
+
+function goTo(id) {
+  const all = ['v-home','v-form-achat','v-form-vente','v-match-detail','v-confirm',
+               'v-dash','v-add-member','v-add-confirm','v-pending','v-mod-annonces','v-settings'];
+  all.forEach(v => {
+    const el = document.getElementById(v);
+    if (el) el.classList.toggle('hidden', v !== id);
+  });
+  document.querySelector('.screen-content').scrollTop = 0;
+}
+
+function resetApp() {
+  document.getElementById('mode-select').style.display = 'block';
+  document.getElementById('app').classList.remove('visible');
+}
+</script>
+</body>
+</html>
